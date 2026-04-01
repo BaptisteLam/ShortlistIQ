@@ -1,14 +1,21 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ExtractedCriteria } from "@/types";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+let _anthropic: Anthropic | null = null;
+
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+  }
+  return _anthropic;
+}
 
 export async function extractCriteria(
   jobDescription: string
 ): Promise<ExtractedCriteria> {
-  const message = await anthropic.messages.create({
+  const message = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1024,
     system:
@@ -29,7 +36,7 @@ export async function extractCriteria(
 export async function extractResumeText(
   pdfBase64: string
 ): Promise<string> {
-  const message = await anthropic.messages.create({
+  const message = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 4096,
     system:
@@ -69,7 +76,7 @@ export async function screenResume(
   concerns: string[];
   interview_questions: string[];
 }> {
-  const message = await anthropic.messages.create({
+  const message = await getAnthropic().messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 2048,
     system: `You are a senior technical recruiter reviewing a resume against specific job requirements. Be precise and objective. Score based on evidence in the resume only — do not infer or assume skills not explicitly mentioned. Return JSON only.
