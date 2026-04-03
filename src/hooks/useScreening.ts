@@ -1,11 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ExtractedCriteria, Candidate } from "@/types";
 
 export function useScreening() {
   const [jobDescription, setJobDescription] = useState("");
   const [criteria, setCriteria] = useState<ExtractedCriteria | null>(null);
+
+  // Hydrate job description from landing page sessionStorage
+  useEffect(() => {
+    const savedJd = sessionStorage.getItem("landing_job_description");
+    if (savedJd) {
+      setJobDescription(savedJd);
+      sessionStorage.removeItem("landing_job_description");
+      sessionStorage.removeItem("landing_files_pending");
+    }
+  }, []);
   const [files, setFiles] = useState<File[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [processing, setProcessing] = useState(false);
