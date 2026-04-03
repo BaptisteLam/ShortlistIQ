@@ -1,6 +1,7 @@
 "use client";
 
 import AnimatedNumber from "@/components/ui/AnimatedNumber";
+import RevealSection from "@/components/landing/RevealSection";
 
 const stats = [
   { value: 60, suffix: "s", label: "Average time to screen 50 resumes" },
@@ -13,18 +14,20 @@ export default function Stats() {
     <section className="py-20 md:py-24 bg-[#FAFAFA] border-y border-[#E5E5E5]">
       <div className="container-main">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="font-mono text-[48px] font-semibold text-[#0A0A0A] leading-none">
-                <AnimatedNumber
-                  value={stat.value}
-                  prefix={stat.prefix}
-                  suffix={stat.suffix}
-                  className="font-mono"
-                />
+          {stats.map((stat, i) => (
+            <RevealSection key={stat.label} delay={i * 100}>
+              <div className="text-center">
+                <div className="font-mono text-[48px] font-semibold text-[#0A0A0A] leading-none">
+                  <AnimatedNumber
+                    value={stat.value}
+                    prefix={stat.prefix}
+                    suffix={stat.suffix}
+                    className="font-mono"
+                  />
+                </div>
+                <p className="mt-3 text-[14px] text-[#6B6B6B]">{stat.label}</p>
               </div>
-              <p className="mt-3 text-[15px] text-[#6B6B6B]">{stat.label}</p>
-            </div>
+            </RevealSection>
           ))}
         </div>
       </div>
