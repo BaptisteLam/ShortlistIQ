@@ -1,12 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
-    const authHeader = request.headers.get("authorization");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
 
-    // Get user from cookie/session
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
     const { jobTitle, jobDescription, extractedCriteria, totalResumes } =
       await request.json();
 
@@ -17,8 +43,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, extract user_id from the auth header or use a placeholder
-    // In production, this would use proper session management
     const { data, error } = await supabase
       .from("screenings")
       .insert({
@@ -27,7 +51,7 @@ export async function POST(request: NextRequest) {
         extracted_criteria: extractedCriteria || {},
         total_resumes: totalResumes || 0,
         status: "draft",
-        user_id: authHeader, // This will be properly set via RLS
+        user_id: user.id,
       })
       .select("id")
       .single();
