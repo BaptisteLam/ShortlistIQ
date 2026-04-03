@@ -13,7 +13,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">("register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -42,78 +42,90 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
     setError(null);
     setLoading(true);
 
-    const supabase = createBrowserSupabaseClient();
+    try {
+      const supabase = createBrowserSupabaseClient();
 
-    if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError("Invalid email or password.");
-        setLoading(false);
-        return;
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          setError("Invalid email or password.");
+          setLoading(false);
+          return;
+        }
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+          },
+        });
+        if (error) {
+          setError("Something went wrong. Try again.");
+          setLoading(false);
+          return;
+        }
       }
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-        },
-      });
-      if (error) {
-        setError("Something went wrong. Try again.");
-        setLoading(false);
-        return;
-      }
+
+      setLoading(false);
+      onSuccess();
+    } catch {
+      setError("Service temporarily unavailable. Please try again.");
+      setLoading(false);
     }
-
-    setLoading(false);
-    onSuccess();
   }
 
   async function handleGoogleAuth() {
-    const supabase = createBrowserSupabaseClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
+    try {
+      const supabase = createBrowserSupabaseClient();
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      });
+    } catch {
+      setError("Service temporarily unavailable.");
+    }
   }
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center auth-modal-enter">
       {/* Blurred backdrop */}
       <div
-        className="absolute inset-0 bg-white/60 backdrop-blur-md"
+        className="absolute inset-0 bg-white/70 backdrop-blur-lg"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white border border-[#E5E5E5] rounded-[12px] p-8 max-w-[420px] w-full mx-4 z-10 shadow-lg">
+      <div className="relative bg-white border border-[#E5E5E5] rounded-[14px] p-8 max-w-[400px] w-full mx-4 z-10 shadow-[0_8px_40px_rgba(0,0,0,0.08)] auth-modal-content">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[#9B9B9B] hover:text-[#0A0A0A] transition-colors"
+          className="absolute top-4 right-4 text-[#BCBCBC] hover:text-[#0A0A0A] transition-colors"
         >
           <X size={18} />
         </button>
 
         <div className="text-center mb-6">
-          <h3 className="text-[20px] font-semibold text-[#0A0A0A]">
-            {mode === "login" ? "Sign in to continue" : "Create your account"}
+          <div className="w-10 h-10 rounded-[8px] bg-[#0A0A0A] flex items-center justify-center mx-auto mb-4">
+            <span className="text-white text-[14px] font-bold">S</span>
+          </div>
+          <h3 className="text-[18px] font-semibold text-[#0A0A0A]">
+            {mode === "login" ? "Welcome back" : "Create your account"}
           </h3>
-          <p className="mt-1.5 text-[14px] text-[#6B6B6B]">
+          <p className="mt-1.5 text-[13px] text-[#9B9B9B]">
             Sign in to launch your resume analysis
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-[13px] text-[#6B6B6B] mb-1.5">
+            <label className="block text-[12px] text-[#9B9B9B] mb-1.5 font-medium uppercase tracking-wider">
               Email
             </label>
             <Input
@@ -125,7 +137,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
             />
           </div>
           <div>
-            <label className="block text-[13px] text-[#6B6B6B] mb-1.5">
+            <label className="block text-[12px] text-[#9B9B9B] mb-1.5 font-medium uppercase tracking-wider">
               Password
             </label>
             <Input
@@ -140,7 +152,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
             />
           </div>
 
-          {error && <p className="text-[13px] text-[#CF222E]">{error}</p>}
+          {error && <p className="text-[12px] text-[#CF222E]">{error}</p>}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading
@@ -162,7 +174,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
           </Button>
         </div>
 
-        <p className="mt-5 text-center text-[13px] text-[#6B6B6B]">
+        <p className="mt-5 text-center text-[12px] text-[#9B9B9B]">
           {mode === "login" ? (
             <>
               Don&apos;t have an account?{" "}
@@ -171,7 +183,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
                   setMode("register");
                   setError(null);
                 }}
-                className="text-[#0A0A0A] underline underline-offset-4"
+                className="text-[#0A0A0A] font-medium underline underline-offset-4"
               >
                 Register
               </button>
@@ -184,7 +196,7 @@ export default function AuthModal({ open, onClose, onSuccess }: AuthModalProps) 
                   setMode("login");
                   setError(null);
                 }}
-                className="text-[#0A0A0A] underline underline-offset-4"
+                className="text-[#0A0A0A] font-medium underline underline-offset-4"
               >
                 Sign in
               </button>
