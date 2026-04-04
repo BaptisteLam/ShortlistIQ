@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase";
+import { createBrowserSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { Profile } from "@/types";
 import type { User } from "@supabase/supabase-js";
 
@@ -11,6 +11,11 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
     const supabase = createBrowserSupabaseClient();
 
     async function getUser() {
@@ -35,7 +40,7 @@ export function useUser() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: { user: User | null } | null) => {
       setUser(session?.user ?? null);
       if (!session?.user) setProfile(null);
     });
